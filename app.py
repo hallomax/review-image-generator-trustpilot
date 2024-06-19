@@ -54,14 +54,6 @@ def draw_partial_square(draw, x, y, size, fill, percentage):
     draw.rectangle([x, y, x + size * percentage, y + size], fill=fill)
     draw.rectangle([x + size * percentage, y, x + size, y + size], fill="#d7d7e2")
 
-def add_rounded_corners(image, radius):
-    # Create a mask to add rounded corners
-    mask = Image.new("L", image.size, 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle((0, 0) + image.size, radius, fill=255)
-    image.putalpha(mask)
-    return image
-
 def create_review_image(rating, total_reviews):
     # Create a blank image with the specified background color
     bg_color = '#eceef0'
@@ -72,6 +64,10 @@ def create_review_image(rating, total_reviews):
     tp_logo_path = 'static/tplogo.png'  # Add your Trustpilot logo path here
     tp_logo = Image.open(tp_logo_path).convert("RGBA").resize((85, 85))
     image.paste(tp_logo, (25, 37), tp_logo)
+
+    # Load star image
+    tp_star_path = 'static/tp_star.png'  # Add your star image path here
+    tp_star = Image.open(tp_star_path).convert("RGBA").resize((22, 22))  # Adjust the size as needed
 
     # Define fonts
     try:
@@ -96,31 +92,37 @@ def create_review_image(rating, total_reviews):
     # Draw squares
     full_squares = int(rating)
     part_square = rating - full_squares
-    x_offset = 215
-    square_size = 14
-    square_spacing = 30  # Define the spacing between squares
+    x_offset = 208
+    square_size = 30
+    square_spacing = 38  # Define the spacing between squares
     square_color = "#00ad72"
-    y_square_position = 100  # Adjusted y-coordinate for squares
+    y_square_position = 68  # Adjusted y-coordinate for squares
 
     for _ in range(full_squares):
         draw_square(draw, x_offset, y_square_position, square_size, square_color)
+        star_x_position = x_offset + (square_size - tp_star.width) // 2
+        star_y_position = y_square_position + (square_size - tp_star.height) // 2
+        image.paste(tp_star, (star_x_position, star_y_position), tp_star)
         x_offset += square_spacing  # Adjust spacing here
 
     if part_square > 0:
         draw_partial_square(draw, x_offset, y_square_position, square_size, square_color, part_square)
+        star_x_position = x_offset + (square_size - tp_star.width) // 2
+        star_y_position = y_square_position + (square_size - tp_star.height) // 2
+        image.paste(tp_star, (star_x_position, star_y_position), tp_star)
         x_offset += square_spacing  # Adjust spacing here
 
     for _ in range(5 - full_squares - (1 if part_square > 0 else 0)):
         draw_square(draw, x_offset, y_square_position, square_size, "#d7d7e2")
+        star_x_position = x_offset + (square_size - tp_star.width) // 2
+        star_y_position = y_square_position + (square_size - tp_star.height) // 2
+        image.paste(tp_star, (star_x_position, star_y_position), tp_star)
         x_offset += square_spacing  # Adjust spacing here
 
     # Resize image to desired size to apply antialiasing
     image = image.resize((230, 77), Image.Resampling.LANCZOS)
 
-    # Add rounded corners
-    image = add_rounded_corners(image, 10)
-
-    # Save the image
+    # Save the image without rounded corners
     output_path = 'output.png'
     image.save(output_path)
     print(f"Image saved as {output_path}")
