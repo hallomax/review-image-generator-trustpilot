@@ -31,6 +31,7 @@ def get_trustpilot_reviews(url):
     soup = BeautifulSoup(response.text, 'html.parser')
 
     rating = None
+    total_reviews = None
 
     # Save the HTML to a file for debugging
     html_file_path = 'trustpilot_page.html'
@@ -42,8 +43,14 @@ def get_trustpilot_reviews(url):
     rating_tag = soup.find('p', {'data-rating-typography': 'true'})
     if rating_tag:
         rating = float(rating_tag.text.strip())
+    
+    # Extract the total number of reviews
+    reviews_tag = soup.find('p', {'data-reviews-count-typography': 'true'})
+    if reviews_tag:
+        total_reviews_text = reviews_tag.text.strip()
+        total_reviews = int(total_reviews_text.split()[0])  # Extract the number before the word "total"
 
-    return rating
+    return rating, total_reviews
 
 def draw_square(draw, x, y, size, fill):
     # Draw filled square
@@ -136,9 +143,9 @@ def create_empty_image():
     print(f"Empty image saved as {output_path}")
 
 if __name__ == "__main__":
-    rating = get_trustpilot_reviews(TRUSTPILOT_URL)
-    if rating:
-        create_review_image(rating, 18)  # Here, 18 is a placeholder for the number of reviews
+    rating, total_reviews = get_trustpilot_reviews(TRUSTPILOT_URL)
+    if rating and total_reviews is not None:
+        create_review_image(rating, total_reviews)  # Use the dynamic total_reviews value
     else:
         create_empty_image()
         print("Failed to retrieve reviews.")
